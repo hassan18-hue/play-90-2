@@ -1,0 +1,44 @@
+name: Build PLAY 90 APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Create Android project
+        run: |
+          flutter create --platforms=android --org=com.play90 --project-name=play90 "$RUNNER_TEMP/play90"
+          cp -r lib "$RUNNER_TEMP/play90/"
+          cp pubspec.yaml "$RUNNER_TEMP/play90/"
+
+      - name: Build APK
+        run: |
+          cd "$RUNNER_TEMP/play90"
+          flutter pub get
+          flutter build apk --release
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: PLAY90-APK
+          path: ${{ runner.temp }}/play90/build/app/outputs/flutter-apk/app-release.apk
